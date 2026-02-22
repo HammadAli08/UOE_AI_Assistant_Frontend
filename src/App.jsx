@@ -15,6 +15,7 @@ import ChatInput from '@/components/Input/ChatInput';
 function ChatPage() {
   const navigate = useNavigate();
   const { send, stop, isStreaming } = useChat();
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const handleSuggestionClick = useCallback(
     (query) => { send(query); },
@@ -22,6 +23,23 @@ function ChatPage() {
   );
 
   const [scrolled, setScrolled] = useState(false);
+
+  // Detect keyboard on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboard = windowHeight - viewportHeight;
+        setKeyboardHeight(keyboard > 100 ? keyboard : 0);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => window.visualViewport.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-navy-950 relative">
@@ -73,7 +91,10 @@ function ChatPage() {
       </header>
 
       {/* ── Chat messages ── */}
-      <div className="flex-1 min-h-0 pt-14 flex flex-col relative z-10 w-full">
+      <div
+        className="flex-1 min-h-0 pt-14 flex flex-col relative z-10 w-full"
+        style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : 0 }}
+      >
         <ChatContainer onSuggestionClick={handleSuggestionClick} onScroll={(isScrolled) => setScrolled(isScrolled)} />
       </div>
 
