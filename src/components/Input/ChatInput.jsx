@@ -93,7 +93,7 @@ function ChatInput({ onSend, onStop, isStreaming }) {
   };
 
   return (
-    <div className="w-full flex-shrink-0 bg-navy-900/60 backdrop-blur-md border-t border-white/6 z-30 pb-[max(16px,env(safe-area-inset-bottom))]">
+    <div className="w-full flex-shrink-0 bg-navy-900/80 backdrop-blur-md border-t border-white/6 z-30 pb-safe">
       <div className="max-w-4xl mx-auto flex flex-col px-2 sm:px-6 pt-4 pb-3">
         {/* ── Alerts ── */}
         {atMaxTurns && (

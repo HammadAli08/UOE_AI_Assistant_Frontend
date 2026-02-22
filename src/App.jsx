@@ -72,12 +72,12 @@ function ChatPage() {
         </button>
       </header>
 
-      {/* ── Chat messages ── */}
-      <div className="flex-1 min-h-0 flex flex-col relative z-10 w-full overflow-hidden">
-        <ChatContainer onSuggestionClick={handleSuggestionClick} onScroll={(isScrolled) => setScrolled(isScrolled)} />
+      {/* ── Chat messages (scrollable) ── */}
+      <div className="flex-1 overflow-hidden">
+        <ChatContainer onSuggestionClick={handleSuggestionClick} />
       </div>
 
-      {/* ── Input area ── */}
+      {/* ── Input area (flex item, not fixed) ── */}
       <ChatInput onSend={send} onStop={stop} isStreaming={isStreaming} />
     </div>
   );
