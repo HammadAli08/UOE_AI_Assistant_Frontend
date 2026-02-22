@@ -4,10 +4,10 @@
 import { memo, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { User, Copy, Check, ThumbsUp, ThumbsDown, RefreshCw } from 'lucide-react';
-import clsx from 'clsx';
-import SmartBadge from '@/components/SmartRAG/SmartBadge';
+import clsx from 'clsBadge from '@/componentsx';
+import Smart/SmartRAG/SmartBadge';
 import useChatStore from '@/store/useChatStore';
 import { submitFeedback } from '@/utils/api';
 import useChat from '@/hooks/useChat';
@@ -17,7 +17,6 @@ function MessageBubble({ message }) {
   const [copied, setCopied] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackBurst, setFeedbackBurst] = useState(null); // 'up' | 'down' | null
-  const [showQuery, setShowQuery] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const hasSmartInfo = message.smartInfo != null;
 
@@ -125,39 +124,6 @@ function MessageBubble({ message }) {
           !isUser && feedback === 'down' && 'message-bubble-down'
         )}
       >
-        {/* Enhanced query indicator */}
-        {!isUser && message.enhancedQuery && (
-          <div className="mb-3">
-            <button
-              onClick={() => setShowQuery(!showQuery)}
-              className="flex items-center gap-1.5 text-2xs font-medium text-mustard-500/80 hover:text-mustard-400 transition-colors"
-            >
-              <span className="text-[10px]">✨</span>
-              <span>Enhanced Query</span>
-              <motion.span
-                animate={{ rotate: showQuery ? 180 : 0 }}
-                className="ml-0.5 inline-block opacity-70"
-              >
-                ▼
-              </motion.span>
-            </button>
-            <AnimatePresence>
-              {showQuery && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <p className="pt-2 text-xs italic text-mist">
-                    &ldquo;{message.enhancedQuery}&rdquo;
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-
         {/* Content */}
         {isUser ? (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
