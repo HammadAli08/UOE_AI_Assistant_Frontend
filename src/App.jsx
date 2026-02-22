@@ -15,7 +15,6 @@ import ChatInput from '@/components/Input/ChatInput';
 function ChatPage() {
   const navigate = useNavigate();
   const { send, stop, isStreaming } = useChat();
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const handleSuggestionClick = useCallback(
     (query) => { send(query); },
@@ -24,25 +23,8 @@ function ChatPage() {
 
   const [scrolled, setScrolled] = useState(false);
 
-  // Detect keyboard on mobile
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        const keyboard = windowHeight - viewportHeight;
-        setKeyboardHeight(keyboard > 100 ? keyboard : 0);
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => window.visualViewport.removeEventListener('resize', handleResize);
-    }
-  }, []);
-
   return (
-    <div className="h-dvh flex flex-col overflow-hidden bg-navy-950 relative">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-navy-950 relative">
       <div className="bg-noise animate-bg-noise" />
       {/* ── Ambient gradient blobs for depth ── */}
       <div
@@ -63,7 +45,7 @@ function ChatPage() {
       {/* ── Minimal top bar ── */}
       <header
         className={clsx(
-          "fixed top-0 left-0 right-0 flex items-center justify-between px-5 sm:px-8 h-14 z-40 transition-all duration-500",
+          "flex-shrink-0 flex items-center justify-between px-5 sm:px-8 h-14 z-40 transition-all duration-500",
           scrolled ? "bg-navy-950/60 backdrop-blur-md border-b border-white/[0.06] shadow-elevated" : "bg-transparent border-transparent"
         )}
       >
@@ -90,11 +72,8 @@ function ChatPage() {
         </button>
       </header>
 
-      {/* ── Chat messages ── */}
-      <div
-        className="flex-1 min-h-0 pt-14 flex flex-col relative z-10 w-full"
-        style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : 0 }}
-      >
+      {/* ── Chat messages area ── */}
+      <div className="flex-1 min-h-0 flex flex-col relative z-10 w-full overflow-hidden">
         <ChatContainer onSuggestionClick={handleSuggestionClick} onScroll={(isScrolled) => setScrolled(isScrolled)} />
       </div>
 
