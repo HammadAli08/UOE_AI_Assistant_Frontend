@@ -28,7 +28,7 @@ export const SUGGESTIONS = {
   'ms-phd': [
     'MS Botany ke lie eligibility criteria kya he?',
     'How many credit hours are required for PhD?',
-    'Tell me about the research requirements',
+    'Tell me about the research requirements For MS Computer Science?',
     'What are the Course Objectives for Advanced Software Engineering?',
   ],
   'rules': [
