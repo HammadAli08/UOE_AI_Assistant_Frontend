@@ -10,7 +10,6 @@ import clsx from 'clsx';
 import SmartBadge from '@/components/SmartRAG/SmartBadge';
 import useChatStore from '@/store/useChatStore';
 import { submitFeedback } from '@/utils/api';
-import useChat from '@/hooks/useChat';
 
 function MessageBubble({ message }) {
   const isUser = message.role === 'user';
@@ -26,7 +25,7 @@ function MessageBubble({ message }) {
   const feedback = useChatStore((s) => s.feedbackMap[message.id]);
   const setFeedback = useChatStore((s) => s.setFeedback);
   const lastUserQuery = useChatStore((s) => s.lastUserQuery);
-  const { send } = useChat();
+  const setDraftInput = useChatStore((s) => s.setDraftInput);
 
   const handleCopy = async () => {
     try {
@@ -36,16 +35,11 @@ function MessageBubble({ message }) {
     } catch { /* ignore */ }
   };
 
-  // Handle retry - resend the last user query
-  const handleRetry = useCallback(async () => {
-    if (retrying || !lastUserQuery) return;
-    setRetrying(true);
-    try {
-      await send(lastUserQuery);
-    } finally {
-      setRetrying(false);
-    }
-  }, [retrying, lastUserQuery, send]);
+  // Handle retry — populate the chat input with the last query
+  const handleRetry = useCallback(() => {
+    if (!lastUserQuery) return;
+    setDraftInput(lastUserQuery);
+  }, [lastUserQuery, setDraftInput]);
 
   const handleFeedback = useCallback(async (type) => {
     if (feedbackLoading) return;
@@ -146,16 +140,14 @@ function MessageBubble({ message }) {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleRetry}
-                disabled={retrying}
+                disabled={!lastUserQuery}
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300',
-                  retrying
-                    ? 'bg-mustard-500/20 text-mustard-400/50 cursor-not-allowed'
-                    : 'bg-mustard-500/15 text-mustard-400 hover:bg-mustard-500/25 hover:scale-105'
+                  'bg-mustard-500/15 text-mustard-400 hover:bg-mustard-500/25 hover:scale-105'
                 )}
               >
-                <RefreshCw className={clsx('w-3.5 h-3.5', retrying && 'animate-spin')} />
-                <span>{retrying ? 'Retrying...' : 'Retry'}</span>
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Retry</span>
               </motion.button>
             )}
 

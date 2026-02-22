@@ -27,6 +27,8 @@ const useChatStore = create((set, get) => ({
   // ── UI State ──
   showChat: false,
   apiOnline: null,      // null = unknown, true/false
+  lastUserQuery: '',    // tracks the last user query for retry
+  draftInput: '',       // pre-fill the chat input (e.g. on retry)
   feedbackMap: {},      // { [messageId]: 'up' | 'down' }
 
   // ── Actions ──
@@ -41,6 +43,7 @@ const useChatStore = create((set, get) => ({
     set((s) => ({
       messages: [...s.messages, msg],
       turnCount: s.turnCount + 1,
+      lastUserQuery: content,
     }));
     return msg;
   },
@@ -106,6 +109,9 @@ const useChatStore = create((set, get) => ({
     set((s) => ({
       feedbackMap: { ...s.feedbackMap, [messageId]: value },
     })),
+
+  setDraftInput: (text) => set({ draftInput: text }),
+  clearDraftInput: () => set({ draftInput: '' }),
 
   newChat: () => set({
     messages: [],
