@@ -1,8 +1,7 @@
 // ──────────────────────────────────────────
-// ChatContainer — scrollable message list
-// Fixed: unified bubble, no conditional wrappers, stable layout
+// ChatContainer — simplest possible stable layout
 // ──────────────────────────────────────────
-import { useEffect, useRef, useCallback, memo } from 'react';
+import { useEffect, useRef, memo } from 'react';
 import useChatStore from '@/store/useChatStore';
 import MessageBubble from './MessageBubble';
 import WelcomeScreen from './WelcomeScreen';
@@ -11,59 +10,45 @@ function ChatContainer({ onSuggestionClick }) {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingContent = useChatStore((s) => s.streamingContent);
-  const messagesEndRef = useRef(null);
-  const containerRef = useRef(null);
+  const endRef = useRef(null);
 
-  // Stable scroll function
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
-  }, []);
-
-  // Only scroll on new message (not during streaming)
+  // Simple scroll to bottom - only after message is added
   useEffect(() => {
-    if (!isStreaming) {
-      scrollToBottom();
+    if (messages.length > 0) {
+      endRef.current?.scrollIntoView({ behavior: 'auto' });
     }
-  }, [messages.length, scrollToBottom, isStreaming]);
+  }, [messages.length]);
 
-  // Show welcome screen only when truly empty
-  const showWelcome = messages.length === 0 && !isStreaming;
+  // Check if should show welcome
+  const hasMessages = messages.length > 0;
 
   return (
-    <div
-      ref={containerRef}
-      className="h-full w-full overflow-y-auto"
-      style={{
-        WebkitOverflowScrolling: 'touch',
-      }}
-    >
+    <div className="h-full w-full overflow-y-auto">
       <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4">
-        {showWelcome ? (
-          <WelcomeScreen onSuggestionClick={onSuggestionClick} />
-        ) : (
+        {hasMessages ? (
           <div className="space-y-3">
             {messages.map((msg) => (
               <MessageBubble key={msg.id} message={msg} />
             ))}
 
-            {/* Streaming indicator */}
-            {isStreaming && (
+            {/* Streaming message - same component, no mount/unmount */}
+            {isStreaming && streamingContent && (
               <MessageBubble
                 message={{
                   id: 'streaming',
                   role: 'assistant',
-                  content: streamingContent || '',
-                  timestamp: new Date().toISOString(),
+                  content: streamingContent,
                 }}
                 isStreaming
                 streamingContent={streamingContent}
               />
             )}
           </div>
+        ) : (
+          <WelcomeScreen onSuggestionClick={onSuggestionClick} />
         )}
 
-        {/* Scroll anchor */}
-        <div ref={messagesEndRef} style={{ height: '1px' }} />
+        <div ref={endRef} />
       </div>
     </div>
   );
