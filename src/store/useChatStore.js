@@ -9,7 +9,6 @@ const useChatStore = create((set, get) => ({
   messages: [],        // [{ id, role:'user'|'assistant', content, timestamp, sources?, smartInfo?, enhancedQuery? }]
   isStreaming: false,
   streamingContent: '',
-  streamingMessageId: null,  // Track the current streaming message ID
 
   // ── Session ──
   sessionId: null,
@@ -29,7 +28,6 @@ const useChatStore = create((set, get) => ({
   showChat: false,
   apiOnline: null,      // null = unknown, true/false
   lastUserQuery: '',    // tracks the last user query for retry
-  draftInput: '',       // pre-fill the chat input (e.g. on retry)
   feedbackMap: {},      // { [messageId]: 'up' | 'down' }
 
   // ── Actions ──
@@ -64,67 +62,31 @@ const useChatStore = create((set, get) => ({
     return msg;
   },
 
-  // Create message at start of streaming - this is the key fix
-  startStreaming: () => {
+  startStreaming: () => set({ isStreaming: true, streamingContent: '' }),
+
+  appendStreamToken: (token) =>
+    set((s) => ({ streamingContent: s.streamingContent + token })),
+
+  finishStreaming: (meta = {}) => {
+    const { streamingContent } = get();
     const msg = {
       id: `asst-${Date.now()}`,
       role: 'assistant',
-      content: '',
+      content: streamingContent,
       timestamp: new Date().toISOString(),
-      sources: [],
-      smartInfo: null,
-      enhancedQuery: null,
-      runId: null,
+      sources: meta.sources || [],
+      smartInfo: meta.smartInfo || null,
+      enhancedQuery: meta.enhancedQuery || null,
+      runId: meta.runId || null,
     };
     set((s) => ({
       messages: [...s.messages, msg],
-      isStreaming: true,
-      streamingContent: '',
-      streamingMessageId: msg.id,
-    }));
-    return msg;
-  },
-
-  // Append token to existing streaming message (update in place)
-  appendStreamToken: (token) =>
-    set((s) => ({
-      streamingContent: s.streamingContent + token,
-      messages: s.messages.map((m) =>
-        m.id === s.streamingMessageId
-          ? { ...m, content: m.content + token }
-          : m
-      ),
-    })),
-
-  // Finalize streaming message (don't replace, just update metadata)
-  finishStreaming: (meta = {}) => {
-    const { streamingMessageId } = get();
-    set((s) => ({
-      messages: s.messages.map((m) =>
-        m.id === streamingMessageId
-          ? {
-              ...m,
-              content: s.streamingContent || m.content,
-              sources: meta.sources || [],
-              smartInfo: meta.smartInfo || null,
-              enhancedQuery: meta.enhancedQuery || null,
-              runId: meta.runId || null,
-            }
-          : m
-      ),
       isStreaming: false,
       streamingContent: '',
-      streamingMessageId: null,
     }));
   },
 
-  cancelStreaming: () => set((s) => ({
-    isStreaming: false,
-    streamingContent: '',
-    streamingMessageId: null,
-    // Remove the incomplete streaming message
-    messages: s.messages.filter((m) => m.id !== s.streamingMessageId),
-  })),
+  cancelStreaming: () => set({ isStreaming: false, streamingContent: '' }),
 
   setSessionId: (id) => set({ sessionId: id }),
 
@@ -147,16 +109,12 @@ const useChatStore = create((set, get) => ({
       feedbackMap: { ...s.feedbackMap, [messageId]: value },
     })),
 
-  setDraftInput: (text) => set({ draftInput: text }),
-  clearDraftInput: () => set({ draftInput: '' }),
-
   newChat: () => set({
     messages: [],
     sessionId: null,
     turnCount: 0,
     isStreaming: false,
     streamingContent: '',
-    streamingMessageId: null,
   }),
 
   isMaxTurns: () => get().turnCount >= MAX_TURNS,
