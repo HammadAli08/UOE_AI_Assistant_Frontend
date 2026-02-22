@@ -22,6 +22,7 @@ export default function useChat() {
     cancelStreaming,
     setSessionId,
     isMaxTurns,
+    setLastUserQuery,
   } = useChatStore();
 
   const send = useCallback(

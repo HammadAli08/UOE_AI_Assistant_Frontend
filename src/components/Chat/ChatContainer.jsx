@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────
 // ChatContainer — scrollable message list
 // ──────────────────────────────────────────
-import { useEffect, useRef, memo } from 'react';
+import { useEffect, useRef, useCallback, memo } from 'react';
 import useChatStore from '@/store/useChatStore';
 import MessageBubble from './MessageBubble';
 import StreamingBubble from './StreamingBubble';
@@ -14,30 +14,45 @@ function ChatContainer({ onSuggestionClick }) {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingContent = useChatStore((s) => s.streamingContent);
-  const bottomRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    const messagesEl = document.getElementById('messages');
-    if (messagesEl) {
-      messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
-    }
-  };
+  const scrollToBottom = useCallback((force = false) => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: force ? 'auto' : 'smooth',
+      block: 'end',
+    });
+  }, []);
 
   // Auto-scroll to bottom on new messages or streaming content
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, streamingContent, isStreaming]);
+    // Small delay to ensure DOM is updated
+    const timeoutId = setTimeout(() => {
+      scrollToBottom(false);
+    }, 100);
+    return () => clearTimeout(timeoutId);
+  }, [messages, streamingContent, isStreaming, scrollToBottom]);
 
-  // Keyboard-aware scroll for mobile
+  // Scroll when streaming content changes
   useEffect(() => {
-    if (window.visualViewport) {
-      const handleResize = () => {
-        setTimeout(scrollToBottom, 120);
-      };
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => window.visualViewport.removeEventListener('resize', handleResize);
+    if (isStreaming && streamingContent) {
+      const interval = setInterval(() => {
+        scrollToBottom(false);
+      }, 200);
+      return () => clearInterval(interval);
     }
-  }, []);
+  }, [isStreaming, streamingContent, scrollToBottom]);
+
+  // Handle mobile keyboard
+  useEffect(() => {
+    const handleVisualViewportResize = () => {
+      setTimeout(() => scrollToBottom(true), 300);
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewportResize);
+      return () => window.visualViewport.removeEventListener('resize', handleVisualViewportResize);
+    }
+  }, [scrollToBottom]);
 
   return (
     <div className="flex-1 min-h-0 flex flex-col relative w-full h-full overflow-hidden">
@@ -53,7 +68,7 @@ function ChatContainer({ onSuggestionClick }) {
             className="flex-1 flex flex-col w-full h-full min-h-0"
           >
             {/* Scrollable message area */}
-            <div id="messages" className="flex-1 overflow-y-auto px-2 sm:px-4 pb-4 pt-4 space-y-3 overflow-anchor-none">
+            <div className="flex-1 overflow-y-auto px-2 sm:px-4 pb-4 pt-4 space-y-3">
               <div className="max-w-4xl mx-auto">
                 {messages.map((msg) => (
                   <MessageBubble key={msg.id} message={msg} />
@@ -67,7 +82,8 @@ function ChatContainer({ onSuggestionClick }) {
                 {/* Typing indicator — streaming started but no content yet */}
                 {isStreaming && !streamingContent && <TypingIndicator />}
 
-                <div className="h-4" />
+                {/* Scroll anchor */}
+                <div ref={messagesEndRef} />
               </div>
             </div>
           </motion.div>
