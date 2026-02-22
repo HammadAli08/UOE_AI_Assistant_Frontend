@@ -38,6 +38,7 @@ export default function useChat() {
       abortRef.current = new AbortController();
       metaRef.current = {};
 
+      // Start streaming - this now creates the message in the store
       startStreaming();
 
       try {

@@ -4,7 +4,6 @@
 import { useEffect, useRef, useCallback, memo } from 'react';
 import useChatStore from '@/store/useChatStore';
 import MessageBubble from './MessageBubble';
-import StreamingBubble from './StreamingBubble';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -13,7 +12,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 function ChatContainer({ onSuggestionClick }) {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
-  const streamingContent = useChatStore((s) => s.streamingContent);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = useCallback((force = false) => {
@@ -28,17 +26,17 @@ function ChatContainer({ onSuggestionClick }) {
       scrollToBottom(false);
     }, 100);
     return () => clearTimeout(timeoutId);
-  }, [messages, streamingContent, isStreaming, scrollToBottom]);
+  }, [messages, isStreaming, scrollToBottom]);
 
-  // Scroll when streaming content changes
+  // Scroll when streaming content changes (throttled)
   useEffect(() => {
-    if (isStreaming && streamingContent) {
+    if (isStreaming) {
       const interval = setInterval(() => {
         scrollToBottom(false);
       }, 300);
       return () => clearInterval(interval);
     }
-  }, [isStreaming, streamingContent, scrollToBottom]);
+  }, [isStreaming, scrollToBottom]);
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4 pb-4 pt-4 space-y-3">
@@ -57,13 +55,8 @@ function ChatContainer({ onSuggestionClick }) {
                 <MessageBubble key={msg.id} message={msg} />
               ))}
 
-              {/* Streaming content */}
-              {isStreaming && streamingContent && (
-                <StreamingBubble content={streamingContent} />
-              )}
-
-              {/* Typing indicator — streaming started but no content yet */}
-              {isStreaming && !streamingContent && <TypingIndicator />}
+              {/* Typing indicator — show only when streaming but no content yet */}
+              {isStreaming && messages.length > 0 && messages[messages.length - 1].role === 'user' && <TypingIndicator />}
 
               {/* Scroll anchor */}
               <div ref={messagesEndRef} />
