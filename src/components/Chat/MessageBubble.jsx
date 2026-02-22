@@ -92,24 +92,15 @@ function MessageBubble({ message, isStreaming = false, streamingContent = '' }) 
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: isUser ? 15 : -15, y: 10 }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 25 }}
+    <div
       className={clsx(
         'flex gap-2 px-2 sm:px-6 py-3',
         isUser ? 'justify-end' : 'justify-start'
       )}
-      style={{ contain: 'layout style' }}
     >
       {/* Avatar — assistant */}
       {!isUser && (
-        <div className={clsx(
-          'flex-shrink-0 w-8 h-8 rounded-lg overflow-hidden mt-0.5',
-          isStreaming
-            ? 'border border-mustard-500/20 shadow-glow-sm'
-            : 'border border-mustard-500/20'
-        )}>
+        <div className="flex-shrink-0 w-8 h-8 rounded-lg overflow-hidden mt-0.5 border border-mustard-500/20">
           <img src="/unnamed.jpg" alt="UOE" className="w-full h-full object-cover" />
         </div>
       )}
@@ -117,156 +108,102 @@ function MessageBubble({ message, isStreaming = false, streamingContent = '' }) 
       {/* Bubble */}
       <div
         className={clsx(
-          'max-w-[80vw] sm:max-w-[75%] lg:max-w-[60%] rounded-2xl relative transition-all duration-500',
+          'max-w-[80vw] sm:max-w-[75%] lg:max-w-[60%] rounded-2xl relative',
           isUser
             ? 'bg-mustard-500/[0.12] border border-mustard-500/20 text-cream px-4 py-3 rounded-br-md'
-            : isStreaming
-              ? 'bg-white/[0.025] border border-white/[0.06] border-l-[3px] border-l-mustard-500/30 rounded-bl-md px-5 py-3.5 shadow-[0_0_15px_rgba(200,185,74,0.1)] animate-glow-pulse'
-              : 'bg-white/[0.025] border border-white/[0.06] px-4 py-3 rounded-bl-md',
-          // Color bleed effect (only when not streaming)
-          !isUser && !isStreaming && feedback === 'up' && 'message-bubble-up',
-          !isUser && !isStreaming && feedback === 'down' && 'message-bubble-down'
+            : 'bg-white/[0.025] border border-white/[0.06] px-4 py-3 rounded-bl-md',
+          !isUser && feedback === 'up' && 'message-bubble-up',
+          !isUser && feedback === 'down' && 'message-bubble-down'
         )}
       >
         {/* Content */}
         {isUser ? (
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{displayContent}</p>
         ) : (
-          <div className={clsx(
-            'message-content text-sm text-cream/85',
-            isStreaming && 'streaming-cursor mask-sweep-reveal'
-          )}>
+          <div className="message-content text-sm text-cream/85">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {displayContent}
             </ReactMarkdown>
           </div>
         )}
 
-        {/* Bottom bar — assistant only, hidden while streaming */}
-        {!isUser && !isStreaming && (
-          <div className="flex items-center gap-2.5 mt-3 pt-2.5 border-t border-white/[0.05]">
+        {/* Bottom bar — assistant only, always rendered (stable height) */}
+        {!isUser && (
+          <div className="flex items-center gap-2.5 mt-3 pt-2.5 border-t border-white/[0.05] min-h-[32px]">
             {/* Smart RAG badge */}
-            {hasSmartInfo && <SmartBadge smartInfo={message.smartInfo} />}
+            {hasSmartInfo && !isStreaming && <SmartBadge smartInfo={message.smartInfo} />}
 
             {/* Retry button for error messages */}
             {isErrorMessage && (
-              <motion.button
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={handleRetry}
                 disabled={!lastUserQuery}
                 className={clsx(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-300',
-                  'bg-mustard-500/15 text-mustard-400 hover:bg-mustard-500/25 hover:scale-105'
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
+                  'bg-mustard-500/15 text-mustard-400 hover:bg-mustard-500/25'
                 )}
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Retry</span>
-              </motion.button>
+              </button>
             )}
 
             <div className="flex-1" />
 
-            {/* ── Feedback buttons (Staggered Reveal) ── */}
-            <div className="flex items-center gap-1 stagger-in" style={{ animationDelay: '200ms' }}>
-              <motion.button
-                whileTap={{ scale: 0.8 }}
-                onClick={() => handleFeedback('up')}
-                disabled={feedbackLoading}
+            {/* Feedback buttons - hidden during streaming */}
+            {!isStreaming && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleFeedback('up')}
+                  disabled={feedbackLoading}
+                  className={clsx(
+                    'p-1.5 rounded-lg transition-all',
+                    feedback === 'up'
+                      ? 'bg-emerald-500/15 text-emerald-400'
+                      : 'text-mist/50 hover:text-emerald-400 hover:bg-emerald-500/[0.08]',
+                    feedbackLoading && 'opacity-50'
+                  )}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" fill={feedback === 'up' ? 'currentColor' : 'none'} />
+                </button>
+
+                <button
+                  onClick={() => handleFeedback('down')}
+                  disabled={feedbackLoading}
+                  className={clsx(
+                    'p-1.5 rounded-lg transition-all',
+                    feedback === 'down'
+                      ? 'bg-rose-500/15 text-rose-400'
+                      : 'text-mist/50 hover:text-rose-400 hover:bg-rose-500/[0.08]',
+                    feedbackLoading && 'opacity-50'
+                  )}
+                >
+                  <ThumbsDown className="w-3.5 h-3.5" fill={feedback === 'down' ? 'currentColor' : 'none'} />
+                </button>
+              </div>
+            )}
+
+            {/* Copy button - hidden during streaming */}
+            {!isStreaming && (
+              <button
+                onClick={handleCopy}
                 className={clsx(
-                  'feedback-btn group relative p-1.5 rounded-lg transition-all duration-300',
-                  feedback === 'up'
-                    ? 'bg-emerald-500/15 text-emerald-400 feedback-active'
-                    : 'text-mist/50 hover:text-emerald-400 hover:bg-emerald-500/[0.08]',
-                  feedbackLoading && 'opacity-50 cursor-not-allowed',
+                  'p-1.5 rounded-lg transition-all',
+                  copied
+                    ? 'text-mustard-400'
+                    : 'text-mist/50 hover:text-cream'
                 )}
               >
-                <ThumbsUp
-                  className={clsx(
-                    'w-3.5 h-3.5 transition-transform duration-300',
-                    feedback === 'up' && 'feedback-pop',
-                  )}
-                  fill={feedback === 'up' ? 'currentColor' : 'none'}
-                  strokeWidth={feedback === 'up' ? 0 : 2}
-                />
-                {/* Particles */}
-                {renderParticles('up')}
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            )}
 
-                {/* Ripple ring on active */}
-                {feedback === 'up' && (
-                  <span className="absolute inset-0 rounded-lg animate-feedback-ring
-                                   border border-emerald-400/40" />
-                )}
-                {/* Tooltip */}
-                <span className="micro-tooltip">
-                  Helpful
-                </span>
-              </motion.button>
-
-              <motion.button
-                whileTap={{ scale: 0.8 }}
-                onClick={() => handleFeedback('down')}
-                disabled={feedbackLoading}
-                className={clsx(
-                  'feedback-btn group relative p-1.5 rounded-lg transition-all duration-300',
-                  feedback === 'down'
-                    ? 'bg-rose-500/15 text-rose-400 feedback-active'
-                    : 'text-mist/50 hover:text-rose-400 hover:bg-rose-500/[0.08]',
-                  feedbackLoading && 'opacity-50 cursor-not-allowed',
-                )}
-              >
-                <ThumbsDown
-                  className={clsx(
-                    'w-3.5 h-3.5 transition-transform duration-300',
-                    feedback === 'down' && 'feedback-pop',
-                  )}
-                  fill={feedback === 'down' ? 'currentColor' : 'none'}
-                  strokeWidth={feedback === 'down' ? 0 : 2}
-                />
-                {/* Particles */}
-                {renderParticles('down')}
-
-                {/* Ripple ring on active */}
-                {feedback === 'down' && (
-                  <span className="absolute inset-0 rounded-lg animate-feedback-ring
-                                   border border-rose-400/40" />
-                )}
-                {/* Tooltip */}
-                <span className="micro-tooltip">
-                  Not helpful
-                </span>
-              </motion.button>
-            </div>
-
-            {/* Divider between feedback and copy */}
-            <div className="w-px h-3 bg-white/[0.08]" />
-
-            {/* Copy button */}
-            <motion.button
-              whileTap={{ scale: 0.8 }}
-              onClick={handleCopy}
-              className={clsx(
-                'group relative p-1.5 rounded-lg transition-all duration-300 stagger-in',
-                copied
-                  ? 'bg-mustard-500/15 text-mustard-400'
-                  : 'text-mist/50 hover:text-cream hover:bg-white/[0.04]'
-              )}
-              style={{ animationDelay: '250ms' }}
-            >
-              {copied ? (
-                <Check className="w-3.5 h-3.5 animate-feedback-pop" />
-              ) : (
-                <Copy className="w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110" />
-              )}
-              {/* Tooltip */}
-              <span className="micro-tooltip">
-                {copied ? 'Copied!' : 'Copy'}
+            {/* Timestamp - hidden during streaming */}
+            {!isStreaming && (
+              <span className="text-2xs text-mist/60">
+                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
-            </motion.button>
-
-            {/* Timestamp */}
-            <span className="text-2xs text-mist/60">
-              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
+            )}
           </div>
         )}
 
