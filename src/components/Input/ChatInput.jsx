@@ -14,27 +14,9 @@ function ChatInput({ onSend, onStop, isStreaming }) {
   const [showNsPicker, setShowNsPicker] = useState(false);
   const [smartHovered, setSmartHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const textareaRef = useRef(null);
   const nsPickerRef = useRef(null);
   const resize = useAutoResize(textareaRef, 160);
-
-  // Detect keyboard on mobile
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        const keyboard = windowHeight - viewportHeight;
-        setKeyboardHeight(keyboard > 100 ? keyboard : 0);
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-      return () => window.visualViewport.removeEventListener('resize', handleResize);
-    }
-  }, []);
 
   // Scroll chat to bottom on input focus (mobile keyboard)
   useEffect(() => {
@@ -111,10 +93,7 @@ function ChatInput({ onSend, onStop, isStreaming }) {
   };
 
   return (
-    <div
-      className="w-full flex-shrink-0 md:relative fixed bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto bg-navy-900/60 backdrop-blur-md border-t border-white/6 z-30"
-      style={{ paddingBottom: keyboardHeight > 0 ? `${keyboardHeight + 16}px` : 'max(16px, env(safe-area-inset-bottom))' }}
-    >
+    <div className="w-full flex-shrink-0 bg-navy-900/60 backdrop-blur-md border-t border-white/6 z-30 pb-[max(16px,env(safe-area-inset-bottom))]">
       <div className="max-w-4xl mx-auto flex flex-col px-2 sm:px-6 pt-4 pb-3">
         {/* ── Alerts ── */}
         {atMaxTurns && (

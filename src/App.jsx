@@ -1,7 +1,7 @@
 // ──────────────────────────────────────────
 // App — root component with routing
 // ──────────────────────────────────────────
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import useChatStore from '@/store/useChatStore';
@@ -72,7 +72,7 @@ function ChatPage() {
         </button>
       </header>
 
-      {/* ── Chat messages area ── */}
+      {/* ── Chat messages ── */}
       <div className="flex-1 min-h-0 flex flex-col relative z-10 w-full overflow-hidden">
         <ChatContainer onSuggestionClick={handleSuggestionClick} onScroll={(isScrolled) => setScrolled(isScrolled)} />
       </div>
