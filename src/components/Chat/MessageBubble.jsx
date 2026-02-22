@@ -1,5 +1,6 @@
 // ──────────────────────────────────────────
-// MessageBubble — dark cinematic message bubble with feedback
+// MessageBubble — unified message bubble (streaming + final)
+// Same DOM node throughout. No remount. No layout shift.
 // ──────────────────────────────────────────
 import { memo, useState, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -11,16 +12,18 @@ import SmartBadge from '@/components/SmartRAG/SmartBadge';
 import useChatStore from '@/store/useChatStore';
 import { submitFeedback } from '@/utils/api';
 
-function MessageBubble({ message }) {
+function MessageBubble({ message, isStreaming = false, streamingContent = '' }) {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackBurst, setFeedbackBurst] = useState(null); // 'up' | 'down' | null
-  const [retrying, setRetrying] = useState(false);
   const hasSmartInfo = message.smartInfo != null;
 
+  // Choose the right content: streaming text when live, message.content when final
+  const displayContent = isStreaming ? streamingContent : message.content;
+
   // Detect if this is an error message
-  const isErrorMessage = !isUser && message.content.includes('Sorry, I encountered an error');
+  const isErrorMessage = !isUser && !isStreaming && message.content.includes('Sorry, I encountered an error');
 
   const feedback = useChatStore((s) => s.feedbackMap[message.id]);
   const setFeedback = useChatStore((s) => s.setFeedback);
@@ -29,7 +32,7 @@ function MessageBubble({ message }) {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
+      await navigator.clipboard.writeText(displayContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* ignore */ }
@@ -46,14 +49,14 @@ function MessageBubble({ message }) {
 
     // Toggle logic: click same = remove vote; click different = switch vote
     const newFeedback = feedback === type ? null : type;
-    const score = newFeedback === 'up' ? 1 : 0; // API score (only used if not null)
+    const score = newFeedback === 'up' ? 1 : 0;
 
     setFeedbackLoading(true);
 
     // Trigger burst only on positive/negative action (not removal)
     if (newFeedback) {
       setFeedbackBurst(type);
-      setTimeout(() => setFeedbackBurst(null), 700); // Clear after animation
+      setTimeout(() => setFeedbackBurst(null), 700);
     }
 
     try {
@@ -70,13 +73,13 @@ function MessageBubble({ message }) {
     }
   }, [feedback, feedbackLoading, message.id, message.runId, setFeedback]);
 
-  // Generate 6 particles for the burst effect
+  // Generate 8 particles for the burst effect
   const renderParticles = (type) => {
     if (feedbackBurst !== type) return null;
     const colorClass = type === 'up' ? 'bg-emerald-400' : 'bg-rose-400';
     return Array.from({ length: 8 }).map((_, i) => {
       const angle = (i * 45 * Math.PI) / 180;
-      const tx = Math.cos(angle) * 24; // Distance
+      const tx = Math.cos(angle) * 24;
       const ty = Math.sin(angle) * 24;
       return (
         <span
@@ -97,11 +100,16 @@ function MessageBubble({ message }) {
         'flex gap-2 px-2 sm:px-6 py-3',
         isUser ? 'justify-end' : 'justify-start'
       )}
+      style={{ contain: 'layout style' }}
     >
       {/* Avatar — assistant */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg overflow-hidden
-                        border border-mustard-500/20 mt-0.5">
+        <div className={clsx(
+          'flex-shrink-0 w-8 h-8 rounded-lg overflow-hidden mt-0.5',
+          isStreaming
+            ? 'border border-mustard-500/20 shadow-glow-sm'
+            : 'border border-mustard-500/20'
+        )}>
           <img src="/unnamed.jpg" alt="UOE" className="w-full h-full object-cover" />
         </div>
       )}
@@ -112,25 +120,30 @@ function MessageBubble({ message }) {
           'max-w-[80vw] sm:max-w-[75%] lg:max-w-[60%] rounded-2xl relative transition-all duration-500',
           isUser
             ? 'bg-mustard-500/[0.12] border border-mustard-500/20 text-cream px-4 py-3 rounded-br-md'
-            : 'bg-white/[0.025] border border-white/[0.06] px-4 py-3 rounded-bl-md',
-          // Color bleed effect
-          !isUser && feedback === 'up' && 'message-bubble-up',
-          !isUser && feedback === 'down' && 'message-bubble-down'
+            : isStreaming
+              ? 'bg-white/[0.025] border border-white/[0.06] border-l-[3px] border-l-mustard-500/30 rounded-bl-md px-5 py-3.5 shadow-[0_0_15px_rgba(200,185,74,0.1)] animate-glow-pulse'
+              : 'bg-white/[0.025] border border-white/[0.06] px-4 py-3 rounded-bl-md',
+          // Color bleed effect (only when not streaming)
+          !isUser && !isStreaming && feedback === 'up' && 'message-bubble-up',
+          !isUser && !isStreaming && feedback === 'down' && 'message-bubble-down'
         )}
       >
         {/* Content */}
         {isUser ? (
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{displayContent}</p>
         ) : (
-          <div className="message-content text-sm text-cream/85">
+          <div className={clsx(
+            'message-content text-sm text-cream/85',
+            isStreaming && 'streaming-cursor mask-sweep-reveal'
+          )}>
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
+              {displayContent}
             </ReactMarkdown>
           </div>
         )}
 
-        {/* Bottom bar — assistant only */}
-        {!isUser && (
+        {/* Bottom bar — assistant only, hidden while streaming */}
+        {!isUser && !isStreaming && (
           <div className="flex items-center gap-2.5 mt-3 pt-2.5 border-t border-white/[0.05]">
             {/* Smart RAG badge */}
             {hasSmartInfo && <SmartBadge smartInfo={message.smartInfo} />}

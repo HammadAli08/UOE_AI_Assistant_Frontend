@@ -1,14 +1,24 @@
 // ──────────────────────────────────────────
 // ChatContainer — scrollable message list
+// Fixed: unified bubble (no StreamingBubble remount),
+//        proper near-bottom scroll guard,
+//        rAF-based smooth scroll.
 // ──────────────────────────────────────────
 import { useEffect, useRef, useCallback, memo } from 'react';
 import useChatStore from '@/store/useChatStore';
 import MessageBubble from './MessageBubble';
-import StreamingBubble from './StreamingBubble';
 import TypingIndicator from './TypingIndicator';
 import WelcomeScreen from './WelcomeScreen';
 import { AnimatePresence, motion } from 'framer-motion';
 
+// Sentinel message object used as the streaming placeholder.
+// Same object identity across renders keeps React reconciliation stable.
+const STREAMING_SENTINEL = {
+  id: '__streaming__',
+  role: 'assistant',
+  content: '',
+  timestamp: new Date().toISOString(),
+};
 
 function ChatContainer({ onSuggestionClick }) {
   const messages = useChatStore((s) => s.messages);
@@ -16,32 +26,43 @@ function ChatContainer({ onSuggestionClick }) {
   const streamingContent = useChatStore((s) => s.streamingContent);
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
-  const wasAtBottomRef = useRef(true);
+  const isNearBottomRef = useRef(true);
 
-  const scrollToBottom = useCallback((force = false) => {
-    if (force || wasAtBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: force ? 'auto' : 'smooth',
-      });
-    }
-  }, []);
-
-  // Track if user is at bottom before new content
+  // ── Persistent scroll listener — tracks if user is near bottom ──
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
-    wasAtBottomRef.current = isAtBottom;
-  }, [messages.length]);
+    const onScroll = () => {
+      const { scrollHeight, scrollTop, clientHeight } = container;
+      isNearBottomRef.current = scrollHeight - scrollTop <= clientHeight + 120;
+    };
 
-  // Auto-scroll to bottom on new messages
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // ── Auto-scroll (guarded) — only if user was already near bottom ──
+  const scrollToBottom = useCallback((force = false) => {
+    if (!force && !isNearBottomRef.current) return;
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: force ? 'auto' : 'smooth',
+      });
+    });
+  }, []);
+
+  // Scroll when new messages arrive
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    scrollToBottom(false);
+  }, [messages.length, scrollToBottom]);
+
+  // Scroll as streaming content grows (throttled via rAF)
+  useEffect(() => {
+    if (isStreaming && streamingContent) {
       scrollToBottom(false);
-    }, 50);
-    return () => clearTimeout(timeoutId);
-  }, [messages, scrollToBottom]);
+    }
+  }, [streamingContent, isStreaming, scrollToBottom]);
 
   return (
     <div
@@ -49,11 +70,11 @@ function ChatContainer({ onSuggestionClick }) {
       className="flex-1 min-h-0 overflow-y-auto"
       style={{
         WebkitOverflowScrolling: 'touch',
-        contain: 'layout style'
+        contain: 'layout style',
       }}
     >
       <div className="max-w-4xl mx-auto px-2 sm:px-4 pt-4 pb-2">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {messages.length === 0 && !isStreaming ? (
             <WelcomeScreen key="welcome" onSuggestionClick={onSuggestionClick} />
           ) : (
@@ -67,12 +88,17 @@ function ChatContainer({ onSuggestionClick }) {
                 <MessageBubble key={msg.id} message={msg} />
               ))}
 
-              {/* Streaming content */}
+              {/* Streaming message — SAME component, same DOM node */}
               {isStreaming && streamingContent && (
-                <StreamingBubble content={streamingContent} />
+                <MessageBubble
+                  key={STREAMING_SENTINEL.id}
+                  message={STREAMING_SENTINEL}
+                  isStreaming
+                  streamingContent={streamingContent}
+                />
               )}
 
-              {/* Typing indicator */}
+              {/* Typing indicator (before any text arrives) */}
               {isStreaming && !streamingContent && <TypingIndicator />}
 
               {/* Scroll anchor */}
