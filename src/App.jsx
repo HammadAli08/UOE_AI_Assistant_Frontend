@@ -1,9 +1,8 @@
 // ──────────────────────────────────────────
 // App — root component with routing
 // ──────────────────────────────────────────
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import clsx from 'clsx';
 import useChatStore from '@/store/useChatStore';
 import useChat from '@/hooks/useChat';
 import useHealthCheck from '@/hooks/useHealthCheck';
@@ -23,27 +22,19 @@ function ChatPage() {
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-navy-950 relative">
-      <div className="bg-noise animate-bg-noise" />
-      {/* ── Ambient gradient blobs for depth ── */}
-      <div
-        className="absolute top-0 right-0 w-[600px] h-[500px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(200,185,74,0.045) 0%, transparent 70%)',
-          filter: 'blur(100px)',
-        }}
-      />
-      <div
-        className="absolute bottom-0 left-0 w-[500px] h-[400px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(100,120,200,0.035) 0%, transparent 70%)',
-          filter: 'blur(100px)',
-        }}
-      />
+      {/* Background noise */}
+      <div className="bg-noise animate-bg-noise pointer-events-none" />
 
-      {/* ── Minimal top bar (fixed, not in flex flow) ── */}
-      <header className="flex-shrink-0 flex items-center justify-between px-5 sm:px-8 h-14 bg-transparent border-transparent z-40">
+      {/* Ambient gradient blobs */}
+      <div className="absolute top-0 right-0 w-[600px] h-[500px] rounded-full pointer-events-none -z-0"
+           style={{ background: 'radial-gradient(circle, rgba(200,185,74,0.045) 0%, transparent 70%)', filter: 'blur(100px)' }} />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[400px] rounded-full pointer-events-none -z-0"
+           style={{ background: 'radial-gradient(circle, rgba(100,120,200,0.035) 0%, transparent 70%)', filter: 'blur(100px)' }} />
+
+      {/* ── Fixed Header (completely outside flex) ── */}
+      <header className="fixed top-0 left-0 right-0 h-14 px-5 sm:px-8 flex items-center justify-between bg-navy-950/80 backdrop-blur-md border-b border-white/[0.06] z-50">
         <button onClick={() => navigate('/')} className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg overflow-hidden group-hover:ring-1 group-hover:ring-mustard-500/30 transition-all duration-300 animate-breathing-glow">
+          <div className="w-8 h-8 rounded-lg overflow-hidden group-hover:ring-1 group-hover:ring-mustard-500/30 transition-all duration-300">
             <img src="/unnamed.jpg" alt="UOE" className="w-full h-full object-cover rounded-lg" />
           </div>
           <div className="text-left">
@@ -62,13 +53,16 @@ function ChatPage() {
         </button>
       </header>
 
-      {/* ── Chat messages (flex: 1, scrollable) ── */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ChatContainer onSuggestionClick={handleSuggestionClick} />
-      </div>
+      {/* ── Main content area (header is fixed, this starts below header) ── */}
+      <div className="flex-1 flex flex-col min-h-0 pt-14">
+        {/* Chat messages (scrollable) */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ChatContainer onSuggestionClick={handleSuggestionClick} />
+        </div>
 
-      {/* ── Input area (flex-shrink: 0, NOT fixed) ── */}
-      <ChatInput onSend={send} onStop={stop} isStreaming={isStreaming} />
+        {/* Input area */}
+        <ChatInput onSend={send} onStop={stop} isStreaming={isStreaming} />
+      </div>
     </div>
   );
 }
