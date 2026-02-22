@@ -15,43 +15,53 @@ function ChatContainer({ onSuggestionClick }) {
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingContent = useChatStore((s) => s.streamingContent);
   const messagesEndRef = useRef(null);
+  const containerRef = useRef(null);
+  const wasAtBottomRef = useRef(true);
 
   const scrollToBottom = useCallback((force = false) => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: force ? 'auto' : 'smooth',
-    });
+    if (force || wasAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: force ? 'auto' : 'smooth',
+      });
+    }
   }, []);
 
-  // Auto-scroll to bottom on new messages or streaming content
+  // Track if user is at bottom before new content
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+    wasAtBottomRef.current = isAtBottom;
+  }, [messages.length]);
+
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       scrollToBottom(false);
-    }, 100);
+    }, 50);
     return () => clearTimeout(timeoutId);
-  }, [messages, streamingContent, isStreaming, scrollToBottom]);
-
-  // Scroll when streaming content changes
-  useEffect(() => {
-    if (isStreaming && streamingContent) {
-      const interval = setInterval(() => {
-        scrollToBottom(false);
-      }, 300);
-      return () => clearInterval(interval);
-    }
-  }, [isStreaming, streamingContent, scrollToBottom]);
+  }, [messages, scrollToBottom]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-2 sm:px-4 pb-4 pt-4 space-y-3">
-      <div className="max-w-4xl mx-auto">
+    <div
+      ref={containerRef}
+      className="flex-1 min-h-0 overflow-y-auto"
+      style={{
+        WebkitOverflowScrolling: 'touch',
+        contain: 'layout style'
+      }}
+    >
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 pt-4 pb-2">
         <AnimatePresence mode="wait">
           {messages.length === 0 && !isStreaming ? (
             <WelcomeScreen key="welcome" onSuggestionClick={onSuggestionClick} />
           ) : (
             <motion.div
               key="chat"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
             >
               {messages.map((msg) => (
                 <MessageBubble key={msg.id} message={msg} />
@@ -62,11 +72,11 @@ function ChatContainer({ onSuggestionClick }) {
                 <StreamingBubble content={streamingContent} />
               )}
 
-              {/* Typing indicator — streaming started but no content yet */}
+              {/* Typing indicator */}
               {isStreaming && !streamingContent && <TypingIndicator />}
 
               {/* Scroll anchor */}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} style={{ height: '1px' }} />
             </motion.div>
           )}
         </AnimatePresence>

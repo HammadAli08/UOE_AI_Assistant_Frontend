@@ -21,8 +21,6 @@ function ChatPage() {
     [send]
   );
 
-  const [scrolled, setScrolled] = useState(false);
-
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-navy-950 relative">
       <div className="bg-noise animate-bg-noise" />
@@ -42,20 +40,14 @@ function ChatPage() {
         }}
       />
 
-      {/* ── Minimal top bar ── */}
-      <header
-        className={clsx(
-          "flex-shrink-0 flex items-center justify-between px-5 sm:px-8 h-14 z-40 transition-all duration-500",
-          scrolled ? "bg-navy-950/60 backdrop-blur-md border-b border-white/[0.06] shadow-elevated" : "bg-transparent border-transparent"
-        )}
-      >
+      {/* ── Minimal top bar (fixed, not in flex flow) ── */}
+      <header className="flex-shrink-0 flex items-center justify-between px-5 sm:px-8 h-14 bg-transparent border-transparent z-40">
         <button onClick={() => navigate('/')} className="flex items-center gap-3 group">
           <div className="w-8 h-8 rounded-lg overflow-hidden group-hover:ring-1 group-hover:ring-mustard-500/30 transition-all duration-300 animate-breathing-glow">
             <img src="/unnamed.jpg" alt="UOE" className="w-full h-full object-cover rounded-lg" />
           </div>
           <div className="text-left">
-            <h1 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-cream leading-tight
-                           group-hover:text-mustard-400 transition-colors duration-300">
+            <h1 className="font-display text-sm font-semibold uppercase tracking-[0.14em] text-cream leading-tight group-hover:text-mustard-400 transition-colors duration-300">
               UOE AI
             </h1>
             <p className="text-2xs text-mist">Academic Assistant</p>
@@ -64,20 +56,18 @@ function ChatPage() {
 
         <button
           onClick={() => useChatStore.getState().newChat()}
-          className="px-4 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02]
-                     text-xs font-medium text-ash hover:text-cream hover:border-mustard-500/30
-                     transition-all duration-400 active:scale-[0.97]"
+          className="px-4 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] text-xs font-medium text-ash hover:text-cream hover:border-mustard-500/30 transition-all duration-400 active:scale-[0.97]"
         >
           New Chat
         </button>
       </header>
 
-      {/* ── Chat messages (scrollable) ── */}
-      <div className="flex-1 overflow-hidden">
+      {/* ── Chat messages (flex: 1, scrollable) ── */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         <ChatContainer onSuggestionClick={handleSuggestionClick} />
       </div>
 
-      {/* ── Input area (flex item, not fixed) ── */}
+      {/* ── Input area (flex-shrink: 0, NOT fixed) ── */}
       <ChatInput onSend={send} onStop={stop} isStreaming={isStreaming} />
     </div>
   );
@@ -85,7 +75,6 @@ function ChatPage() {
 
 /* ── App root with routes ── */
 export default function App() {
-  // Poll backend health every 30 s
   useHealthCheck(30000);
 
   return (

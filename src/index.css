@@ -11,10 +11,18 @@
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 
   body {
-    @apply min-h-screen;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  #root {
+    height: 100%;
   }
 
   /* ── Custom Selection — mustard tint ── */
