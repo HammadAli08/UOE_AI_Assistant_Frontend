@@ -38,12 +38,26 @@ function ChatInput({ onSend, onStop, isStreaming }) {
   const setNamespace = useChatStore((s) => s.setNamespace);
   const settings = useChatStore((s) => s.settings);
   const updateSettings = useChatStore((s) => s.updateSettings);
+  const draftInput = useChatStore((s) => s.draftInput);
+  const setDraftInput = useChatStore((s) => s.setDraftInput);
 
   const atMaxTurns = turnCount >= MAX_TURNS;
   const charCount = value.length;
   const overLimit = charCount > MAX_QUERY_LENGTH;
   const canSend = value.trim().length > 0 && !overLimit && !isStreaming && !atMaxTurns && apiOnline !== false;
   const currentNs = NAMESPACES.find((n) => n.id === namespace);
+
+  // Sync draft input from store (e.g., when retry is clicked)
+  useEffect(() => {
+    if (draftInput && draftInput !== value) {
+      setValue(draftInput);
+      setDraftInput('');
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        resize();
+      }
+    }
+  }, [draftInput, value, setDraftInput, resize]);
 
   // Close namespace picker on outside click
   useEffect(() => {

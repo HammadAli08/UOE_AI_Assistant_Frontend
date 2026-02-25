@@ -2,22 +2,26 @@
 // ChatContainer — simplest possible stable layout
 // ──────────────────────────────────────────
 import { useEffect, useRef, memo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import useChatStore from '@/store/useChatStore';
 import MessageBubble from './MessageBubble';
 import WelcomeScreen from './WelcomeScreen';
+import ThinkingAnimation from './ThinkingAnimation';
 
 function ChatContainer({ onSuggestionClick }) {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingContent = useChatStore((s) => s.streamingContent);
+  const isThinking = useChatStore((s) => s.isThinking);
+  const thinkingMode = useChatStore((s) => s.thinkingMode);
   const endRef = useRef(null);
 
-  // Simple scroll to bottom - only after message is added
+  // Scroll to bottom when messages change or thinking/streaming starts
   useEffect(() => {
-    if (messages.length > 0) {
-      endRef.current?.scrollIntoView({ behavior: 'auto' });
+    if (messages.length > 0 || isThinking || isStreaming) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages.length]);
+  }, [messages.length, isThinking, isStreaming]);
 
   // Check if should show welcome
   const hasMessages = messages.length > 0;
@@ -30,6 +34,13 @@ function ChatContainer({ onSuggestionClick }) {
             {messages.map((msg) => (
               <MessageBubble key={msg.id} message={msg} />
             ))}
+
+            {/* Thinking animation — plays before streaming */}
+            <AnimatePresence mode="wait">
+              {isThinking && (
+                <ThinkingAnimation mode={thinkingMode} />
+              )}
+            </AnimatePresence>
 
             {/* Streaming message - same component, no mount/unmount */}
             {isStreaming && streamingContent && (

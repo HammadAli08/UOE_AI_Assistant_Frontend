@@ -16,6 +16,7 @@ export default function useChat() {
     isStreaming,
     addUserMessage,
     addAssistantMessage,
+    startThinking,
     startStreaming,
     appendStreamToken,
     finishStreaming,
@@ -37,7 +38,10 @@ export default function useChat() {
       abortRef.current = new AbortController();
       metaRef.current = {};
 
-      startStreaming();
+      // Start thinking animation (streaming begins on first token)
+      const thinkingMode = settings.enableSmart ? 'smart' : 'standard';
+      startThinking(thinkingMode);
+      let streamingStarted = false;
 
       try {
         await chatStreaming({
@@ -48,6 +52,10 @@ export default function useChat() {
           signal: abortRef.current.signal,
 
           onToken: (token) => {
+            if (!streamingStarted) {
+              streamingStarted = true;
+              startStreaming();
+            }
             appendStreamToken(token);
           },
 
@@ -113,6 +121,7 @@ export default function useChat() {
       isStreaming,
       addUserMessage,
       addAssistantMessage,
+      startThinking,
       startStreaming,
       appendStreamToken,
       finishStreaming,

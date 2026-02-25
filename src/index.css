@@ -754,6 +754,267 @@
   height: 120%;
 }
 
+/* ═══════ Thinking Animation ═══════ */
+
+.thinking-bubble {
+  position: relative;
+  max-width: 85%;
+  border-radius: 1rem;
+  border-bottom-left-radius: 0.375rem;
+  padding: 1rem 1.25rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--phase-color, rgba(200, 185, 74, 0.5));
+  transition: border-color 0.4s ease;
+}
+
+@media (min-width: 640px) {
+  .thinking-bubble {
+    max-width: 75%;
+    padding: 1rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .thinking-bubble {
+    max-width: 60%;
+  }
+}
+
+.thinking-ambient-glow {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 9999px;
+  filter: blur(30px);
+  opacity: 0.6;
+  animation: thinkingGlowPulse 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes thinkingGlowPulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+}
+
+/* ── Icon Wrapper with Orbit ── */
+
+.thinking-icon-wrapper {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .thinking-icon-wrapper {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+.thinking-icon-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thinking-icon {
+  display: block;
+}
+
+@media (max-width: 639px) {
+  .thinking-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ── Orbiting Dots ── */
+
+.thinking-orbit-container {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.thinking-orbit-dot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  opacity: 0.5;
+  animation: orbitDots 2.5s linear infinite;
+}
+
+.thinking-orbit-dot:nth-child(1) {
+  top: 0;
+  left: 50%;
+  transform-origin: 50% 20px;
+  animation-delay: 0s;
+}
+
+.thinking-orbit-dot:nth-child(2) {
+  top: 0;
+  left: 50%;
+  transform-origin: 50% 20px;
+  animation-delay: -0.83s;
+}
+
+.thinking-orbit-dot:nth-child(3) {
+  top: 0;
+  left: 50%;
+  transform-origin: 50% 20px;
+  animation-delay: -1.66s;
+}
+
+@media (max-width: 639px) {
+
+  .thinking-orbit-dot:nth-child(1),
+  .thinking-orbit-dot:nth-child(2),
+  .thinking-orbit-dot:nth-child(3) {
+    transform-origin: 50% 17px;
+  }
+}
+
+@keyframes orbitDots {
+  from {
+    transform: rotate(0deg) translateX(0);
+  }
+
+  to {
+    transform: rotate(360deg) translateX(0);
+  }
+}
+
+/* ── Phase Label ── */
+
+.thinking-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  background: linear-gradient(90deg,
+      rgba(232, 228, 220, 0.85) 0%,
+      rgba(200, 185, 74, 0.7) 45%,
+      rgba(232, 228, 220, 0.85) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: thinkingShimmer 2.5s linear infinite;
+}
+
+@media (max-width: 639px) {
+  .thinking-label {
+    font-size: 0.75rem;
+  }
+}
+
+@keyframes thinkingShimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* ── Animated Dots ── */
+
+.thinking-dots span {
+  animation: thinkingDotBounce 1.4s infinite ease-in-out;
+  display: inline-block;
+  -webkit-text-fill-color: rgba(138, 149, 168, 0.5);
+}
+
+.thinking-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.thinking-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thinking-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes thinkingDotBounce {
+
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* ── Progress Track ── */
+
+.thinking-progress-track {
+  width: 100%;
+  max-width: 140px;
+  height: 2px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+@media (max-width: 639px) {
+  .thinking-progress-track {
+    max-width: 100px;
+  }
+}
+
+.thinking-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  box-shadow: 0 0 6px currentColor;
+}
+
+/* ── Smart Mode Badge ── */
+
+.thinking-mode-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(167, 139, 250, 0.7);
+  background: rgba(167, 139, 250, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.15);
+}
+
 /* ═══════ Reduced Motion (MUST be last) ═══════ */
 @media (prefers-reduced-motion: reduce) {
 

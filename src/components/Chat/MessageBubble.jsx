@@ -216,7 +216,7 @@ function MessageBubble({ message, isStreaming = false, streamingContent = '' }) 
           <User className="w-4 h-4 text-ash" />
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 

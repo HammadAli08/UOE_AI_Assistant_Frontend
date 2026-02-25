@@ -28,7 +28,12 @@ const useChatStore = create((set, get) => ({
   showChat: false,
   apiOnline: null,      // null = unknown, true/false
   lastUserQuery: '',    // tracks the last user query for retry
+  draftInput: '',       // draft input value for retry feature
   feedbackMap: {},      // { [messageId]: 'up' | 'down' }
+
+  // ── Thinking Animation ──
+  isThinking: false,
+  thinkingMode: 'standard', // 'standard' | 'smart'
 
   // ── Actions ──
 
@@ -62,7 +67,10 @@ const useChatStore = create((set, get) => ({
     return msg;
   },
 
-  startStreaming: () => set({ isStreaming: true, streamingContent: '' }),
+  startThinking: (mode = 'standard') => set({ isThinking: true, thinkingMode: mode }),
+  stopThinking: () => set({ isThinking: false }),
+
+  startStreaming: () => set({ isStreaming: true, streamingContent: '', isThinking: false }),
 
   appendStreamToken: (token) =>
     set((s) => ({ streamingContent: s.streamingContent + token })),
@@ -86,7 +94,7 @@ const useChatStore = create((set, get) => ({
     }));
   },
 
-  cancelStreaming: () => set({ isStreaming: false, streamingContent: '' }),
+  cancelStreaming: () => set({ isStreaming: false, streamingContent: '', isThinking: false }),
 
   setSessionId: (id) => set({ sessionId: id }),
 
@@ -109,12 +117,15 @@ const useChatStore = create((set, get) => ({
       feedbackMap: { ...s.feedbackMap, [messageId]: value },
     })),
 
+  setDraftInput: (value) => set({ draftInput: value }),
+
   newChat: () => set({
     messages: [],
     sessionId: null,
     turnCount: 0,
     isStreaming: false,
     streamingContent: '',
+    isThinking: false,
   }),
 
   isMaxTurns: () => get().turnCount >= MAX_TURNS,
